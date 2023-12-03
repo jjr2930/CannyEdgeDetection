@@ -1,0 +1,7 @@
+*.v2
+*.vsidx
+*.suo
+.vs/
+CannyEdgeDetection/bin/
+CannyEdgeDetection/obj/
+*.user
