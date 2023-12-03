@@ -123,20 +123,23 @@ namespace CannyEdgeDetection
         {
             GrayImage result = new GrayImage(image.Width, image.Height);
 
-            for (int y = 0; y < image.Height; y++)
+            Parallel.For(0, image.Height, (y) =>
             {
                 for (int x = 0; x < image.Width; x++)
                 {
                     int sum = 0;
-                    for (int kx = 0; kx < kernel.GetLength(0); kx++)
+                    int kernelHeight = kernel.GetLength(0);
+                    int kernelWidth = kernel.GetLength(1);
+
+                    for (int kx = 0; kx < kernelHeight; kx++)
                     {
-                        for (int ky = 0; ky < kernel.GetLength(1); ky++)
+                        for (int ky = 0; ky < kernelWidth; ky++)
                         {
                             int tx = x + kx;
                             int ty = y + ky;
 
                             bool invalidPosiiton = false;
-                            
+
                             //범위를 초과한 경우에는 흰색이라고 가정한다.                            
                             if (tx < 0)
                                 invalidPosiiton = true;
@@ -163,7 +166,7 @@ namespace CannyEdgeDetection
 
                     result[y, x] = sum;
                 }
-            }
+            });
 
             return result;
         }

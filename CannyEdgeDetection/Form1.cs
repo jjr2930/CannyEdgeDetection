@@ -106,8 +106,6 @@ namespace CannyEdgeDetection
 
             //세로 소벨 마스킹
             Console.WriteLine("vertical sobel");
-
-
             durationChecker.Start();
             sobelVerticalMaksedImage = GrayImage.Convolute(bluredImage, sobelMasks[SOBEL_VERTICAL]);
             durationChecker.StopAndPrint();
@@ -116,7 +114,6 @@ namespace CannyEdgeDetection
 
             //가로 소벨 마스킹
             Console.WriteLine("horizontal sobel");
-
             durationChecker.Start();
             sobelHorizontalMaksedImage = GrayImage.Convolute(bluredImage, sobelMasks[SOBEL_HORIZONTAL]);
             durationChecker.StopAndPrint();
@@ -125,18 +122,23 @@ namespace CannyEdgeDetection
 
             //그레디언트 구하기 수행
             Console.WriteLine("gradient");
-            //GetGradientValues(sobelMaskedImage, out gradientMagnitudeImage, out gradientSlopes);
+            durationChecker.Start();
             DoGradient(sobelVerticalMaksedImage, sobelHorizontalMaksedImage, out gradientMagnitudeImage, out gradientSlopes);
+            durationChecker.StopAndPrint();
             gradientMagnitudeImageBox.Image = gradientMagnitudeImage.ToBitmap();
 
             //최대값 억제 수행
             Console.WriteLine("NonMaximumSuppression");
+            durationChecker.Start();
             nonMaximumSuppressionImage = DoNonMaxiumSuppression(gradientMagnitudeImage, gradientSlopes);
+            durationChecker.StopAndPrint();
             nonMaximumSupressionImageBox.Image = nonMaximumSuppressionImage.ToBitmap();
 
             //히스테리시스를 수행한다.
             Console.WriteLine("Histeresis");
+            durationChecker.Start();
             histeresisedImage = DoHisteresis(nonMaximumSuppressionImage, (float)LowThresholdUpDown.Value, (float)HighThresholdUpDown.Value);
+            durationChecker.StopAndPrint();
             histeresisedImageBox.Image = histeresisedImage.ToBitmap();
 
             //picturebox들의 위치를 갱신
