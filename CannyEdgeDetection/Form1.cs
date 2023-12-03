@@ -217,7 +217,7 @@ namespace CannyEdgeDetection
         {
             GrayImage result = new GrayImage(gradientImage.Width, gradientImage.Height);
 
-            for (int y = 0; y < gradientImage.Height; ++y)
+            Parallel.For(0, gradientImage.Height, (y) => 
             {
                 for (int x = 0; x < gradientImage.Width; ++x)
                 {
@@ -278,7 +278,7 @@ namespace CannyEdgeDetection
                         result[positions[1].Y, positions[1].X] = 0;
                     }
                 }
-            }
+            });
 
             return result;
         }
