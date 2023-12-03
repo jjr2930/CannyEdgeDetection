@@ -67,6 +67,7 @@
             // 
             LowThresholdUpDown.Location = new Point(151, 36);
             LowThresholdUpDown.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
+            LowThresholdUpDown.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             LowThresholdUpDown.Name = "LowThresholdUpDown";
             LowThresholdUpDown.Size = new Size(180, 31);
             LowThresholdUpDown.TabIndex = 1;
@@ -95,6 +96,7 @@
             // 
             HighThresholdUpDown.Location = new Point(495, 38);
             HighThresholdUpDown.Maximum = new decimal(new int[] { 255, 0, 0, 0 });
+            HighThresholdUpDown.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
             HighThresholdUpDown.Name = "HighThresholdUpDown";
             HighThresholdUpDown.Size = new Size(180, 31);
             HighThresholdUpDown.TabIndex = 3;

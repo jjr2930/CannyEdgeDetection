@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
@@ -65,6 +66,9 @@ namespace CannyEdgeDetection
         public GrayImage(Bitmap bitmap)
         {
             color = new int[bitmap.Size.Height, bitmap.Size.Width];
+
+            DurationChecker timer = new DurationChecker();
+            timer.Start();
             for (int y = 0; y < bitmap.Size.Height; y++)
             {
                 for (int x = 0; x < bitmap.Size.Width; x++)
@@ -74,6 +78,7 @@ namespace CannyEdgeDetection
                     color[y, x] = (int)((rgb.R + rgb.G + rgb.B) / 3f);
                 }
             }
+            timer.StopAndPrint();
         }
 
         public GrayImage(int width, int height)
@@ -123,6 +128,8 @@ namespace CannyEdgeDetection
         {
             GrayImage result = new GrayImage(image.Width, image.Height);
 
+            DurationChecker timer = new DurationChecker();
+            timer.Start();
             Parallel.For(0, image.Height, (y) =>
             {
                 for (int x = 0; x < image.Width; x++)
@@ -167,6 +174,7 @@ namespace CannyEdgeDetection
                     result[y, x] = sum;
                 }
             });
+            timer.StopAndPrint();
 
             return result;
         }

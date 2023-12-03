@@ -50,8 +50,6 @@ namespace CannyEdgeDetection
         SlopeType[,] gradientSlopes;
         OpenFileDialog dialog;
 
-        DurationChecker durationChecker = new DurationChecker();
-
         float[][,] sobelMasks = new float[2][,]
         {
             new float[3,3]
@@ -91,58 +89,44 @@ namespace CannyEdgeDetection
 
             //이미지를 그레이스케일로 변환한다.
             Console.WriteLine("Grayscale");
-            durationChecker.Start();
             grayscaleImage = new GrayImage(originBitmap);
-            durationChecker.StopAndPrint();
             grayscaleImageBox.Image = grayscaleImage.ToBitmap();
 
             //가우시안 블러된 이미지를 얻어온다.
             Console.WriteLine("blur using gaussian blur");
-            durationChecker.Start();
             bluredImage = GrayImage.Convolute(grayscaleImage, gaussianKernel.kernelMatrix);
-            durationChecker.StopAndPrint();
             gaussianBluredImageBox.Image = bluredImage.ToBitmap();
 
             //세로 소벨 마스킹
             Console.WriteLine("vertical sobel");
-            durationChecker.Start();
             sobelVerticalMaksedImage = GrayImage.Convolute(bluredImage, sobelMasks[SOBEL_VERTICAL]);
-            durationChecker.StopAndPrint();
             sobelVerticalMaskedImageBox.Image = sobelVerticalMaksedImage.ToBitmap();
 
 
             //가로 소벨 마스킹
             Console.WriteLine("horizontal sobel");
-            durationChecker.Start();
             sobelHorizontalMaksedImage = GrayImage.Convolute(bluredImage, sobelMasks[SOBEL_HORIZONTAL]);
-            durationChecker.StopAndPrint();
             sobelHorizontalMaskedImageBox.Image = sobelHorizontalMaksedImage.ToBitmap();
 
             //그레디언트 구하기 수행
             Console.WriteLine("gradient");
-            
+
             int width = sobelVerticalMaksedImage.Width;
             int height = sobelVerticalMaksedImage.Height;
             gradientMagnitudeImage = new GrayImage(width, height);
             gradientSlopes = new SlopeType[height, width];
 
-            durationChecker.Start();
             DoGradient(sobelVerticalMaksedImage, sobelHorizontalMaksedImage, gradientMagnitudeImage, gradientSlopes);
-            durationChecker.StopAndPrint();
             gradientMagnitudeImageBox.Image = gradientMagnitudeImage.ToBitmap();
 
             //최대값 억제 수행
             Console.WriteLine("NonMaximumSuppression");
-            durationChecker.Start();
             nonMaximumSuppressionImage = DoNonMaxiumSuppression(gradientMagnitudeImage, gradientSlopes);
-            durationChecker.StopAndPrint();
             nonMaximumSupressionImageBox.Image = nonMaximumSuppressionImage.ToBitmap();
 
             //히스테리시스를 수행한다.
             Console.WriteLine("Histeresis");
-            durationChecker.Start();
             histeresisedImage = DoHisteresis(nonMaximumSuppressionImage, (float)LowThresholdUpDown.Value, (float)HighThresholdUpDown.Value);
-            durationChecker.StopAndPrint();
             histeresisedImageBox.Image = histeresisedImage.ToBitmap();
 
             //picturebox들의 위치를 갱신
@@ -216,8 +200,9 @@ namespace CannyEdgeDetection
         private GrayImage DoNonMaxiumSuppression(GrayImage gradientImage, SlopeType[,] gradientSlopes)
         {
             GrayImage result = new GrayImage(gradientImage.Width, gradientImage.Height);
-
-            Parallel.For(0, gradientImage.Height, (y) => 
+            DurationChecker timer = new DurationChecker();
+            timer.Start();
+            Parallel.For(0, gradientImage.Height, (y) =>
             {
                 for (int x = 0; x < gradientImage.Width; ++x)
                 {
@@ -279,6 +264,7 @@ namespace CannyEdgeDetection
                     }
                 }
             });
+            timer.StopAndPrint();
 
             return result;
         }
@@ -295,6 +281,8 @@ namespace CannyEdgeDetection
             int width = verticalGradient.Width;
             int height = verticalGradient.Height;
 
+            DurationChecker timer = new DurationChecker();
+            timer.Start();
             Parallel.For(0, height, (y) =>
             {
                 for (int x = 0; x < width; x++)
@@ -342,6 +330,7 @@ namespace CannyEdgeDetection
                     }
                 }
             });
+            timer.StopAndPrint();
         }
 
         /// <summary>
@@ -354,6 +343,9 @@ namespace CannyEdgeDetection
         private GrayImage DoHisteresis(GrayImage nonMaximumSuppressionImage, float lowThreshold, float highThreshold)
         {
             GrayImage result = new GrayImage(nonMaximumSuppressionImage.Width, nonMaximumSuppressionImage.Height);
+
+            DurationChecker timer = new DurationChecker();
+            timer.Start();
 
             Parallel.For(0, result.Height, (y) =>
             {
@@ -386,6 +378,7 @@ namespace CannyEdgeDetection
                 }
             });
 
+            timer.StopAndPrint();
             return result;
         }
 
@@ -443,12 +436,12 @@ namespace CannyEdgeDetection
                 {
                     //주변 이웃들을 큐에 넣는다.
                     q.Enqueue(new Point(point.X - 1, point.Y - 1));
-                    q.Enqueue(new Point(point.X,     point.Y - 1));
+                    q.Enqueue(new Point(point.X, point.Y - 1));
                     q.Enqueue(new Point(point.X + 1, point.Y - 1));
                     q.Enqueue(new Point(point.X - 1, point.Y));
                     q.Enqueue(new Point(point.X + 1, point.Y));
                     q.Enqueue(new Point(point.X - 1, point.Y + 1));
-                    q.Enqueue(new Point(point.X,     point.Y + 1));
+                    q.Enqueue(new Point(point.X, point.Y + 1));
                     q.Enqueue(new Point(point.X + 1, point.Y + 1));
                 }
             }
