@@ -118,11 +118,16 @@ namespace CannyEdgeDetection
             durationChecker.StopAndPrint();
             sobelHorizontalMaskedImageBox.Image = sobelHorizontalMaksedImage.ToBitmap();
 
-
             //그레디언트 구하기 수행
             Console.WriteLine("gradient");
+            
+            int width = sobelVerticalMaksedImage.Width;
+            int height = sobelVerticalMaksedImage.Height;
+            gradientMagnitudeImage = new GrayImage(width, height);
+            gradientSlopes = new SlopeType[height, width];
+
             durationChecker.Start();
-            DoGradient(sobelVerticalMaksedImage, sobelHorizontalMaksedImage, out gradientMagnitudeImage, out gradientSlopes);
+            DoGradient(sobelVerticalMaksedImage, sobelHorizontalMaksedImage, gradientMagnitudeImage, gradientSlopes);
             durationChecker.StopAndPrint();
             gradientMagnitudeImageBox.Image = gradientMagnitudeImage.ToBitmap();
 
@@ -212,9 +217,9 @@ namespace CannyEdgeDetection
         {
             GrayImage result = new GrayImage(gradientImage.Width, gradientImage.Height);
 
-            for (int y = 0; y < sobelHorizontalMaksedImage.Height; ++y)
+            for (int y = 0; y < gradientImage.Height; ++y)
             {
-                for (int x = 0; x < sobelHorizontalMaksedImage.Width; ++x)
+                for (int x = 0; x < gradientImage.Width; ++x)
                 {
                     SlopeType slope = gradientSlopes[y, x];
                     int[] pixel = new int[3];
@@ -285,14 +290,12 @@ namespace CannyEdgeDetection
         /// <param name="horizontalGradient">수평 소벨 마스크를 컨볼류션 곱을 한 이미지</param>
         /// <param name="gradientImage">그레디언트를 구한 이미지</param>
         /// <param name="slopeTypes">픽셀별 구해진 각도를 6방향으로 저장하는 곳</param>
-        void DoGradient(GrayImage verticalGradient, GrayImage horizontalGradient, out GrayImage gradientImage, out SlopeType[,] slopeTypes)
+        void DoGradient(GrayImage verticalGradient, GrayImage horizontalGradient, GrayImage gradientImage, SlopeType[,] slopeTypes)
         {
             int width = verticalGradient.Width;
             int height = verticalGradient.Height;
 
-            gradientImage = new GrayImage(width, height);
-            slopeTypes = new SlopeType[height, width];
-            for (int y = 0; y < height; y++)
+            Parallel.For(0, height, (y) =>
             {
                 for (int x = 0; x < width; x++)
                 {
@@ -338,7 +341,7 @@ namespace CannyEdgeDetection
                         slopeTypes[y, x] = SlopeType.RightDown;
                     }
                 }
-            }
+            });
         }
 
         /// <summary>
