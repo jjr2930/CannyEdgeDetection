@@ -27,16 +27,25 @@ namespace CannyEdgeDetection
         {
             get => color.GetLength(0); 
         }
-
+        /// <summary>
+        /// 이미지의 너비
+        /// </summary>
         public int Width
         {
             get => color.GetLength(1);
         }
 
+        /// <summary>
+        /// 화소를 얻어오기
+        /// </summary>
+        /// <param name="indexY"></param>
+        /// <param name="indexX"></param>
+        /// <returns></returns>
         public int this[int indexY, int indexX]
         {
             get
             {
+                //배열 범위를 초과하면 0으로 리턴해준다.
                 if (IsOutOfRange(indexX, indexY))
                 {
                     return 0;
@@ -48,6 +57,7 @@ namespace CannyEdgeDetection
             }
             set
             {
+                //배열 범위를 초과하면 아무일도 하지 않는다.
                 if (IsOutOfRange(indexX, indexY))
                 {
                     return;
@@ -81,11 +91,20 @@ namespace CannyEdgeDetection
             timer.StopAndPrint();
         }
 
+        /// <summary>
+        /// 주어진 크기로 color배열을 잡는다.
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
         public GrayImage(int width, int height)
         {
             color = new int[height, width];
         }
 
+        /// <summary>
+        /// PictueBox에 넣기 위해 Bitmap으로 변환한다.
+        /// </summary>
+        /// <returns></returns>
         public Bitmap ToBitmap()
         {
             Bitmap newBitmap = new Bitmap(Width, Height);
@@ -94,6 +113,8 @@ namespace CannyEdgeDetection
                 for (int x = 0; x < Width; x++)
                 {
                     int colorValue = color[y, x];
+
+                    //값을 유요한 범위로 변환
                     if (colorValue < 0)
                         colorValue = 0;
                     if (colorValue > 255)
@@ -130,6 +151,7 @@ namespace CannyEdgeDetection
 
             DurationChecker timer = new DurationChecker();
             timer.Start();
+            //병렬 연산을 위해 parallel.for를 사용
             Parallel.For(0, image.Height, (y) =>
             {
                 for (int x = 0; x < image.Width; x++)
@@ -147,7 +169,7 @@ namespace CannyEdgeDetection
 
                             bool invalidPosiiton = false;
 
-                            //범위를 초과한 경우에는 흰색이라고 가정한다.                            
+                            //범위를 초과한 경우에는 흰색(255)으로 주고 계산하게 한다.                            
                             if (tx < 0)
                                 invalidPosiiton = true;
                             if (ty < 0)
@@ -175,26 +197,6 @@ namespace CannyEdgeDetection
                 }
             });
             timer.StopAndPrint();
-
-            return result;
-        }
-
-        public static GrayImage operator+(GrayImage imageA, GrayImage imageB)
-        {
-            //다른 사이즈의 이미지 들이라면 계산할 수 없다....
-            if (imageA.Width != imageB.Width)
-                throw new InvalidOperationException($"wrong size image, a=>w:{imageA.Width},h:{imageA.Height}, b=>w:{imageB.Width},h:{imageB.Height}");
-            if (imageA.Height != imageB.Height)
-                throw new InvalidOperationException($"wrong size image, a=>w:{imageA.Width},h:{imageA.Height}, b=>w:{imageB.Width},h:{imageB.Height}");
-
-            GrayImage result = new GrayImage(imageA.Width, imageA.Height);
-            for (int y = 0; y < imageA.Height; y++)
-            {
-                for (int x = 0; x < imageA.Width; x++)
-                {
-                    result[y,x] = imageA[y,x] + imageB[y,x];
-                }
-            }
 
             return result;
         }

@@ -34,9 +34,18 @@ namespace CannyEdgeDetection
         PictureBox gaussianBluredImageBox;
         PictureBox sobelHorizontalMaskedImageBox;
         PictureBox sobelVerticalMaskedImageBox;
-        PictureBox gradientMagnitudeImageBox;
+        PictureBox gradientImageBox;
         PictureBox nonMaximumSupressionImageBox;
         PictureBox histeresisedImageBox;
+
+        Label originImageLabel;
+        Label grayscaleImageLabel;
+        Label gaussianBluredImageLabel;
+        Label sobelHorizontalMaskedImageLabel;
+        Label sobelVerticalMaskedImageLabel;
+        Label gradientImageLabel;
+        Label nmpImageLabel;
+        Label histeresisImageLabel;
 
         GrayImage grayscaleImage;
         GrayImage bluredImage;
@@ -117,7 +126,7 @@ namespace CannyEdgeDetection
             gradientSlopes = new SlopeType[height, width];
 
             DoGradient(sobelVerticalMaksedImage, sobelHorizontalMaksedImage, gradientMagnitudeImage, gradientSlopes);
-            gradientMagnitudeImageBox.Image = gradientMagnitudeImage.ToBitmap();
+            gradientImageBox.Image = gradientMagnitudeImage.ToBitmap();
 
             //최대값 억제 수행
             Console.WriteLine("NonMaximumSuppression");
@@ -147,33 +156,53 @@ namespace CannyEdgeDetection
         }
 
         /// <summary>
-        /// 모든 picture box의 위치를 정한다.
+        /// 모든 control들의 위치를 정한다.
         /// </summary>
         void RepositionControls()
         {
             Point point = new Point(10, 100);
-            SetImageBoxPosition(point.X, point.Y, originImageBox);
-
+            SetPictureBoxPosition(point.X, point.Y, originImageBox);
+            SetLabelPositionByPictureBox(originImageLabel, originImageBox);
+            
             point.X += originImageBox.Width + 10;
-            SetImageBoxPosition(point.X, point.Y, grayscaleImageBox);
+            SetPictureBoxPosition(point.X, point.Y, grayscaleImageBox);
+            SetLabelPositionByPictureBox(grayscaleImageLabel, grayscaleImageBox);
 
             point.X += grayscaleImageBox.Width + 10;
-            SetImageBoxPosition(point.X, point.Y, gaussianBluredImageBox);
+            SetPictureBoxPosition(point.X, point.Y, gaussianBluredImageBox);
+            SetLabelPositionByPictureBox(gaussianBluredImageLabel, gaussianBluredImageBox);
 
             point.X += gaussianBluredImageBox.Width + 10;
-            SetImageBoxPosition(point.X, point.Y, sobelHorizontalMaskedImageBox);
+            SetPictureBoxPosition(point.X, point.Y, sobelHorizontalMaskedImageBox);
+            SetLabelPositionByPictureBox(sobelHorizontalMaskedImageLabel, sobelHorizontalMaskedImageBox);
 
             point.X += sobelHorizontalMaskedImageBox.Width + 10;
-            SetImageBoxPosition(point.X, point.Y, sobelVerticalMaskedImageBox);
+            SetPictureBoxPosition(point.X, point.Y, sobelVerticalMaskedImageBox); 
+            SetLabelPositionByPictureBox(sobelVerticalMaskedImageLabel, sobelVerticalMaskedImageBox);
 
             point.X += sobelVerticalMaskedImageBox.Width + 10;
-            SetImageBoxPosition(point.X, point.Y, gradientMagnitudeImageBox);
+            SetPictureBoxPosition(point.X, point.Y, gradientImageBox);
+            SetLabelPositionByPictureBox(gradientImageLabel, gradientImageBox);
 
-            point.X += gradientMagnitudeImageBox.Width + 10;
-            SetImageBoxPosition(point.X, point.Y, nonMaximumSupressionImageBox);
+            point.X += gradientImageBox.Width + 10;
+            SetPictureBoxPosition(point.X, point.Y, nonMaximumSupressionImageBox);
+            SetLabelPositionByPictureBox(nmpImageLabel, nonMaximumSupressionImageBox);
 
             point.X += nonMaximumSupressionImageBox.Width + 10;
-            SetImageBoxPosition(point.X, point.Y, histeresisedImageBox);
+            SetPictureBoxPosition(point.X, point.Y, histeresisedImageBox);
+            SetLabelPositionByPictureBox(histeresisImageLabel, histeresisedImageBox);
+        }
+
+        /// <summary>
+        /// 주어진 픽처 박스를 통해 라벨의 위치를 정한다.
+        /// </summary>
+        /// <param name="label"></param>
+        /// <param name="pictureBox"></param>
+        void SetLabelPositionByPictureBox(Label label, PictureBox pictureBox)
+        {
+            label.Refresh();
+            label.Left = pictureBox.Left;
+            label.Top = pictureBox.Bottom + 10;
         }
 
         /// <summary>
@@ -182,7 +211,7 @@ namespace CannyEdgeDetection
         /// <param name="x">x위치</param>
         /// <param name="y">y위치</param>
         /// <param name="pictureBox">변경할 picturebox</param>
-        void SetImageBoxPosition(int x, int y, PictureBox pictureBox)
+        void SetPictureBoxPosition(int x, int y, PictureBox pictureBox)
         {
             pictureBox.Width = pictureBox.Image.Width;
             pictureBox.Height = pictureBox.Image.Height;
@@ -283,6 +312,7 @@ namespace CannyEdgeDetection
 
             DurationChecker timer = new DurationChecker();
             timer.Start();
+            //병렬 연산을 위해 parallel.for를 사용
             Parallel.For(0, height, (y) =>
             {
                 for (int x = 0; x < width; x++)
@@ -295,6 +325,7 @@ namespace CannyEdgeDetection
                     float angle = MathF.Atan2(horizontalValue, verticalValue);
                     //호도법의 angle을 구한다.
                     angle *= RADIAN_TO_DEGREE;
+                    //구해진 값을 8방향으로 쪼개고 이를 저장한다.
                     if (-22.5f < angle && angle <= 22.5f)
                     {
                         slopeTypes[y, x] = SlopeType.Horizontal;
@@ -346,17 +377,19 @@ namespace CannyEdgeDetection
 
             DurationChecker timer = new DurationChecker();
             timer.Start();
-
+            //병렬 연산을 위해 parallel.for를 사용
             Parallel.For(0, result.Height, (y) =>
             {
                 //모든 픽셀을 검사한다.
                 for (int x = 0; x < result.Width; x++)
                 {
                     float pixel = nonMaximumSuppressionImage[y, x];
+                    //낮은 임계 값 미만이면 검은 색으로 표시
                     if (pixel < lowThreshold)
                     {
                         result[y, x] = 0;
                     }
+                    //높은 임계 값 이상이면 흰색으로 표시
                     else if (pixel >= highThreshold)
                     {
                         result[y, x] = 255;
@@ -457,18 +490,48 @@ namespace CannyEdgeDetection
             gaussianBluredImageBox = new PictureBox();
             sobelHorizontalMaskedImageBox = new PictureBox();
             sobelVerticalMaskedImageBox = new PictureBox();
-            gradientMagnitudeImageBox = new PictureBox();
+            gradientImageBox = new PictureBox();
             nonMaximumSupressionImageBox = new PictureBox();
             histeresisedImageBox = new PictureBox();
+
+            originImageLabel = new Label();
+            grayscaleImageLabel = new Label();
+            gaussianBluredImageLabel = new Label();
+            sobelHorizontalMaskedImageLabel = new Label();
+            sobelVerticalMaskedImageLabel = new Label();
+            gradientImageLabel = new Label();
+            nmpImageLabel = new Label();
+            histeresisImageLabel = new Label();
+
+            originImageLabel.Text = "Origin";
+            grayscaleImageLabel.Text = "Gray";
+            gaussianBluredImageLabel.Text = "Blured";
+            sobelHorizontalMaskedImageLabel.Text = "Sobel H";
+            sobelVerticalMaskedImageLabel.Text = "Sobel V";
+            gradientImageLabel.Text = "Gradient";
+            nmpImageLabel.Text = "NMP";
+            histeresisImageLabel.Text = "histeresis";
+
 
             ImageContainer.Controls.Add(originImageBox);
             ImageContainer.Controls.Add(grayscaleImageBox);
             ImageContainer.Controls.Add(gaussianBluredImageBox);
             ImageContainer.Controls.Add(sobelHorizontalMaskedImageBox);
             ImageContainer.Controls.Add(sobelVerticalMaskedImageBox);
-            ImageContainer.Controls.Add(gradientMagnitudeImageBox);
+            ImageContainer.Controls.Add(gradientImageBox);
             ImageContainer.Controls.Add(nonMaximumSupressionImageBox);
             ImageContainer.Controls.Add(histeresisedImageBox);
+
+            //add label into imagecontainer
+            ImageContainer.Controls.Add(originImageLabel);
+            ImageContainer.Controls.Add(grayscaleImageLabel);
+            ImageContainer.Controls.Add(gaussianBluredImageLabel);
+            ImageContainer.Controls.Add(sobelHorizontalMaskedImageLabel);
+            ImageContainer.Controls.Add(sobelVerticalMaskedImageLabel);
+            ImageContainer.Controls.Add(gradientImageLabel);
+            ImageContainer.Controls.Add(nmpImageLabel);
+            ImageContainer.Controls.Add(histeresisImageLabel);
+
 
             gaussianKernel = new GaussianKernel(3, 5f);
         }
@@ -480,34 +543,63 @@ namespace CannyEdgeDetection
             var result = dialog.ShowDialog();
             if (result == DialogResult.OK)
             {
-                //이미지를 연다.
+                //이미지를 열고, 캐니엣지 탐지 알고리즘을 수행한다.
                 DoCannyEdgeDetection();
             }
         }
 
+        /// <summary>
+        /// 블러 사이즈가 변경된 경우 호출된다.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BlurSizeUpDown_ValueChanged(object sender, EventArgs e)
         {
+            //가우시안 블러를 다시 만들고
             gaussianKernel = new GaussianKernel((int)BlurSizeUpDown.Value, (float)BlurSigmaUpdown.Value);
+            //캐니 엣지 탐색을 수행한다.
             DoCannyEdgeDetection();
         }
 
+        /// <summary>
+        /// 낮은 임계값 변경된 경우 호출된다.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void LowThresholdUpDown_ValueChanged(object sender, EventArgs e)
         {
+            //만약 low가 high보다 크다면 둘을 바꾼다.
+            SwapHighAndLowIfNeed();
+            //변경된 값을 이용하여 히스테리시스를 수행한다.
             histeresisedImage = DoHisteresis(nonMaximumSuppressionImage, (float)LowThresholdUpDown.Value, (float)HighThresholdUpDown.Value);
             histeresisedImageBox.Image = histeresisedImage.ToBitmap();
-            SwapHighAndLowIfNeed();
         }
 
+        /// <summary>
+        /// 높은 임계값이 변경된 경우 호출된다.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void HighThresholdUpDown_ValueChanged(object sender, EventArgs e)
         {
+            //만약 low가 high보다 크다면 둘을 바꾼다.
+            SwapHighAndLowIfNeed();
+            //변경된 값을 이용하여 히스테리 시스를 수행한다.
             histeresisedImage = DoHisteresis(nonMaximumSuppressionImage, (float)LowThresholdUpDown.Value, (float)HighThresholdUpDown.Value);
             histeresisedImageBox.Image = histeresisedImage.ToBitmap();
-            SwapHighAndLowIfNeed();
         }
 
+        /// <summary>
+        /// 블러의 시그마(표준 편차)가 변경되었을 경우 호출됨
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BlurSigmaUpdown_ValueChanged(object sender, EventArgs e)
         {
+            //변경된 값으로 가우시안 커널을 다시 만들고,
             gaussianKernel = new GaussianKernel((int)BlurSizeUpDown.Value, (float)BlurSigmaUpdown.Value);
+
+            //에지 탐색 수행
             DoCannyEdgeDetection();
         }
     }
