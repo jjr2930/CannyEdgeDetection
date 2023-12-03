@@ -48,7 +48,6 @@ namespace CannyEdgeDetection
 
         GaussianKernel gaussianKernel;
         SlopeType[,] gradientSlopes;
-        bool[,] visited;
         OpenFileDialog dialog;
 
         DurationChecker durationChecker = new DurationChecker();
@@ -352,11 +351,10 @@ namespace CannyEdgeDetection
         private GrayImage DoHisteresis(GrayImage nonMaximumSuppressionImage, float lowThreshold, float highThreshold)
         {
             GrayImage result = new GrayImage(nonMaximumSuppressionImage.Width, nonMaximumSuppressionImage.Height);
-            //방문 표시용 배열의 초기화
-            visited = new bool[result.Height, result.Width];
-            //모든 픽셀을 검사한다.
-            for (int y = 0; y < result.Height; y++)
+
+            Parallel.For(0, result.Height, (y) =>
             {
+                //모든 픽셀을 검사한다.
                 for (int x = 0; x < result.Width; x++)
                 {
                     float pixel = nonMaximumSuppressionImage[y, x];
@@ -370,7 +368,6 @@ namespace CannyEdgeDetection
                     }
                     else
                     {
-                        ClearVisited();
                         //이 픽셀이 높은 임계값을 갖는 픽셀과 이어져 있는지 알기 위해서는 너비 우선 탐색을 이용한 길찾기를 하면 된다.
                         //너비 우선 탐색을 통해 높은 임계값을 갖는 필셀과 이어져 있다면, 이 화소를 흰색으로 표현한다.
                         if (BFS(nonMaximumSuppressionImage, x, y))
@@ -384,22 +381,9 @@ namespace CannyEdgeDetection
                         //}
                     }
                 }
-            }
+            });
 
             return result;
-        }
-
-        void ClearVisited()
-        {
-            int height = visited.GetLength(0);
-            int width = visited.GetLength(1);
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    visited[y, x] = false;
-                }
-            }
         }
 
         /// <summary>
@@ -411,6 +395,7 @@ namespace CannyEdgeDetection
         /// <returns>높은 임계값을 넘는 점과 연결 되었다면 true, 아니면 false </returns>
         bool BFS(GrayImage nmsImage, int x, int y)
         {
+            var visited = new bool[nmsImage.Height, nmsImage.Width];
             Queue<Point> q = new Queue<Point>();
             //시작 지점을 큐에 넣는다.
             q.Enqueue(new Point(x, y));
